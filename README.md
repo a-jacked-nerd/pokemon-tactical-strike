@@ -46,33 +46,28 @@ pokemon-tactical-strike/
 ├── .gitignore                        # Git ignore patterns
 │
 ├── CV/                               # Computer Vision Module
-│   ├── cv_module.py                  # Main CV detection class
-│   ├── train_cv.py                   # YOLOv8 training script
+│   ├── cv.py                         # Main CV detection class
 │   ├── config.yaml                   # CV configuration
 │   └── old_scripts/                  # Previous CV versions
 │       ├── cv_v1.py
 │       ├── cv_v2.py
-│       └── cv_utils.py
+│       └── cv_v3.py
 │
 ├── NLP/                              # Natural Language Processing Module
-│   ├── nlp_module.py                 # Main NLP classifier class
+│   ├── nlp.py                        # Main NLP classifier class
 │   ├── train_nlp.py                  # BERT training script
 │   ├── config.json                   # NLP configuration
 │   └── old_scripts/                  # Previous NLP versions
 │       ├── nlp_v1.py
 │       ├── nlp_v2.py
-│       └── data_generator.py
+│       └── nlp_v3.py
 │
 ├── Integration/                      # Combined Pipeline
 │   └── integration_pipeline.ipynb    # Main execution notebook
 │
 ├── data/                            # Sample datasets
-│   ├── sample_images/
-│   └── sample_prompts.json
-│
-└── utils/                           # Utility scripts
-    ├── json_to_csv.py               # Format converter
-    └── visualization.py             # Result visualization
+    ├── sample_images/
+    └── sample_prompts.json
 ```
 
 ## 🚀 Quick Start Guide
@@ -122,7 +117,7 @@ python train_nlp.py
 ```
 
 **Expected Output**:
-- Model files in: `enhanced_pokemon_nlp/` directory
+- Model files in something like: `nlp/` directory
 - Contains: `model.safetensors`, `config.json`, `tokenizer.json`, etc.
 - Training logs and evaluation metrics
 
