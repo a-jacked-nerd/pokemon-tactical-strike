@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 """
-ENHANCED POKEMON TARGET IDENTIFICATION NLP MODULE
-=================================================
+POKEMON TARGET IDENTIFICATION NLP MODULE
+=======================================
 
-Improved version with better model architecture, training process,
-and integration with CV components.
+Complete NLP training pipeline for identifying Pokemon targets from military-style prompts.
+This module generates synthetic training data, trains a transformer-based classifier,
+and saves the trained model for deployment.
 
-Key improvements:
-1. Better synthetic data generation with more diverse prompts
-2. Improved model architecture with attention mechanisms
-3. Enhanced rule-based fallback system
-4. Proper JSON handling for model saving/loading
-5. Integration with CV components for coordinate prediction
-6. Confidence-based decision making with miss count tracking
+Features:
+- Synthetic data generation with military-style prompts
+- Enhanced transformer architecture with attention pooling
+- Comprehensive training with evaluation metrics
+- Rule-based fallback system for inference
+- Model saving in standard formats (SafeTensors, config, tokenizer)
 
-Version: 4.0 - Enhanced Version
+Version: 4.0
 """
 
 import torch
@@ -40,7 +40,7 @@ from collections import defaultdict, Counter
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# Setup logging
+# Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -125,10 +125,12 @@ POKEMON_KNOWLEDGE = {
     }
 }
 
-# ====================== LLM SYNTHETIC DATA GENERATOR ======================
-class EnhancedSyntheticDataGenerator:
+# ====================== SYNTHETIC DATA GENERATOR ======================
+class SyntheticDataGenerator:
+    """Generates synthetic military-style prompts for training"""
+    
     def __init__(self):
-        logger.info("Initializing enhanced synthetic data generator...")
+        logger.info("Initializing synthetic data generator")
         
         self.military_headers = [
             "HQ REPORT", "INTELLIGENCE UPDATE", "FIELD BULLETIN",
@@ -217,6 +219,7 @@ class EnhancedSyntheticDataGenerator:
         ]
     
     def generate_single_target_prompt(self, target_pokemon: str, prompt_length: int = None) -> str:
+        """Generate a single training prompt for the specified target"""
         if prompt_length is None:
             prompt_length = random.randint(300, 800)
         
@@ -229,12 +232,12 @@ class EnhancedSyntheticDataGenerator:
         primary_descriptor = random.choice(target_descriptors)
         prompt_parts = []
         
-        # Military header
+        # Add military header
         header = random.choice(self.military_headers)
         situation_desc = f"Situation analysis regarding unusual activity of {primary_descriptor} in this operational zone."
         prompt_parts.append(f"{header} {situation_desc}")
         
-        # Tactical noise
+        # Add tactical noise
         noise_count = max(8, int(prompt_length * 0.6 / 15))
         for _ in range(noise_count):
             noise_template = random.choice(self.tactical_noise_templates)
@@ -247,7 +250,7 @@ class EnhancedSyntheticDataGenerator:
             )
             prompt_parts.append(filled_noise)
         
-        # Add distractors
+        # Add distractors for other Pokemon
         other_pokemon = [p for p in POKEMON_KNOWLEDGE.keys() if p != target_pokemon]
         for _ in range(random.randint(1, 3)):
             distractor_pokemon = random.choice(other_pokemon)
@@ -264,25 +267,25 @@ class EnhancedSyntheticDataGenerator:
             quote_text = quote_template.format(famous_person=famous_person, quote=quote)
             prompt_parts.insert(random.randint(1, len(prompt_parts)), quote_text)
         
-        # Main elimination command
+        # Insert main elimination command
         elimination_template = random.choice(self.elimination_command_templates)
         target_desc = random.choice(target_descriptors)
         main_command = elimination_template.format(target=target_desc)
         insert_pos = len(prompt_parts) // 2 + random.randint(0, len(prompt_parts) // 3)
         prompt_parts.insert(insert_pos, main_command)
         
-        # More noise
+        # Add more tactical noise
         for _ in range(random.randint(3, 5)):
             noise_template = random.choice(self.tactical_noise_templates)
             prompt_parts.append(noise_template)
         
-        # Final assembly
+        # Assemble final prompt
         prompt = " ".join(prompt_parts)
         
-        # Ensure the prompt is within the desired length
+        # Trim to desired length if necessary
         words = prompt.split()
         if len(words) > prompt_length:
-            # Keep the elimination command and trim from other parts
+            # Keep parts around the elimination command
             elimination_idx = -1
             for i, part in enumerate(prompt_parts):
                 if any(cmd in part for cmd in ["eliminate", "neutralize", "terminate", "destroy"]):
@@ -290,7 +293,6 @@ class EnhancedSyntheticDataGenerator:
                     break
             
             if elimination_idx >= 0:
-                # Keep parts around the elimination command
                 start_idx = max(0, elimination_idx - 5)
                 end_idx = min(len(prompt_parts), elimination_idx + 6)
                 kept_parts = prompt_parts[start_idx:end_idx]
@@ -299,13 +301,14 @@ class EnhancedSyntheticDataGenerator:
         return prompt
     
     def generate_training_dataset(self, samples_per_pokemon: int = 2500) -> List[Dict]:
-        logger.info(f"Generating {samples_per_pokemon * 4} synthetic training samples...")
+        """Generate complete training dataset"""
+        logger.info(f"Generating {samples_per_pokemon * 4} synthetic training samples")
         
         dataset = []
         pokemon_list = list(POKEMON_KNOWLEDGE.keys())
         
         for pokemon_idx, target_pokemon in enumerate(pokemon_list):
-            logger.info(f"Generating samples for {target_pokemon}...")
+            logger.info(f"Generating samples for {target_pokemon}")
             
             for sample_idx in range(samples_per_pokemon):
                 if sample_idx % 500 == 0:
@@ -316,23 +319,25 @@ class EnhancedSyntheticDataGenerator:
                 dataset.append({
                     'prompt': prompt,
                     'target_pokemon': target_pokemon,
-                    'label': pokemon_idx,  # Integer label for CrossEntropyLoss
+                    'label': pokemon_idx,  # Integer label for model training
                     'length': len(prompt.split())
                 })
         
-        logger.info(f"✅ Generated {len(dataset)} total training samples")
+        logger.info(f"Generated {len(dataset)} total training samples")
         
+        # Log dataset statistics
         lengths = [item['length'] for item in dataset]
-        logger.info(f"📊 Prompt length stats: min={min(lengths)}, max={max(lengths)}, avg={np.mean(lengths):.1f}")
+        logger.info(f"Prompt length stats: min={min(lengths)}, max={max(lengths)}, avg={np.mean(lengths):.1f}")
         
-        # Check class distribution
         label_counts = Counter([item['label'] for item in dataset])
-        logger.info(f"📊 Class distribution: {label_counts}")
+        logger.info(f"Class distribution: {label_counts}")
         
         return dataset
 
 # ====================== ENHANCED CLASSIFIER MODEL ======================
 class EnhancedPokemonClassifier(nn.Module):
+    """Transformer-based classifier with attention pooling"""
+    
     def __init__(self, model_name: str = 'bert-base-uncased', num_classes: int = 4):
         super().__init__()
         
@@ -341,10 +346,10 @@ class EnhancedPokemonClassifier(nn.Module):
         
         hidden_size = self.config.hidden_size
         
-        # Enhanced architecture with attention pooling
+        # Dropout for regularization
         self.dropout = nn.Dropout(0.3)
         
-        # Attention pooling layer
+        # Attention pooling mechanism
         self.attention = nn.Sequential(
             nn.Linear(hidden_size, hidden_size // 2),
             nn.Tanh(),
@@ -352,7 +357,7 @@ class EnhancedPokemonClassifier(nn.Module):
             nn.Softmax(dim=1)
         )
         
-        # Classifier with more capacity
+        # Multi-layer classifier
         self.classifier = nn.Sequential(
             nn.Linear(hidden_size, hidden_size // 2),
             nn.ReLU(),
@@ -366,6 +371,7 @@ class EnhancedPokemonClassifier(nn.Module):
         self._init_weights()
     
     def _init_weights(self):
+        """Initialize classifier weights"""
         for module in self.attention:
             if isinstance(module, nn.Linear):
                 nn.init.xavier_uniform_(module.weight)
@@ -379,12 +385,13 @@ class EnhancedPokemonClassifier(nn.Module):
                     nn.init.zeros_(module.bias)
     
     def forward(self, input_ids, attention_mask=None, labels=None):
+        """Forward pass through the model"""
         outputs = self.transformer(
             input_ids=input_ids,
             attention_mask=attention_mask
         )
         
-        # Use attention pooling instead of just [CLS]
+        # Apply attention pooling instead of using only [CLS] token
         hidden_states = outputs.last_hidden_state
         attention_weights = self.attention(hidden_states)
         context_vector = torch.sum(attention_weights * hidden_states, dim=1)
@@ -392,7 +399,7 @@ class EnhancedPokemonClassifier(nn.Module):
         context_vector = self.dropout(context_vector)
         logits = self.classifier(context_vector)
         
-        # Calculate loss if labels are provided (for training)
+        # Calculate loss if labels provided
         loss = None
         if labels is not None:
             loss_fn = nn.CrossEntropyLoss()
@@ -402,6 +409,8 @@ class EnhancedPokemonClassifier(nn.Module):
 
 # ====================== DATASET CLASS ======================
 class PokemonDataset(Dataset):
+    """Dataset class for Pokemon classification training"""
+    
     def __init__(self, data: List[Dict], tokenizer, max_length: int = 512):
         self.data = data
         self.tokenizer = tokenizer
@@ -415,8 +424,9 @@ class PokemonDataset(Dataset):
     def __getitem__(self, idx):
         item = self.data[idx]
         prompt = item['prompt']
-        label = item['label']  # Integer label
+        label = item['label']
         
+        # Tokenize the prompt
         encoding = self.tokenizer(
             prompt,
             truncation=True,
@@ -432,24 +442,27 @@ class PokemonDataset(Dataset):
             'labels': torch.tensor(label, dtype=torch.long)
         }
 
-# ====================== TRAINING FUNCTIONS ======================
-class EnhancedLoggingCallback(TrainerCallback):
+# ====================== TRAINING UTILITIES ======================
+class TrainingCallback(TrainerCallback):
+    """Custom callback for training progress logging"""
+    
     def on_log(self, args, state, control, model=None, logs=None, **kwargs):
         if logs:
             if 'eval_accuracy' in logs:
-                logger.info(f"📈 Eval Accuracy: {logs['eval_accuracy']:.4f}")
+                logger.info(f"Eval Accuracy: {logs['eval_accuracy']:.4f}")
             if 'eval_loss' in logs:
-                logger.info(f"📉 Eval Loss: {logs['eval_loss']:.4f}")
+                logger.info(f"Eval Loss: {logs['eval_loss']:.4f}")
             if 'train_loss' in logs:
-                logger.info(f"📉 Train Loss: {logs['train_loss']:.4f}")
+                logger.info(f"Train Loss: {logs['train_loss']:.4f}")
 
 def compute_metrics(eval_pred):
+    """Compute evaluation metrics"""
     predictions, labels = eval_pred
     predictions = np.argmax(predictions, axis=1)
     
     accuracy = accuracy_score(labels, predictions)
     
-    # Calculate additional metrics
+    # Calculate per-class metrics
     pokemon_names = list(POKEMON_KNOWLEDGE.keys())
     per_class_acc = {}
     per_class_f1 = {}
@@ -471,6 +484,7 @@ def compute_metrics(eval_pred):
     return metrics
 
 def plot_confusion_matrix(labels, predictions, class_names, output_dir):
+    """Generate and save confusion matrix plot"""
     cm = confusion_matrix(labels, predictions)
     plt.figure(figsize=(8, 6))
     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
@@ -482,17 +496,19 @@ def plot_confusion_matrix(labels, predictions, class_names, output_dir):
     plt.savefig(f'{output_dir}/confusion_matrix.png')
     plt.close()
 
-def train_enhanced_model(output_dir: str = './enhanced_pokemon_nlp') -> Tuple[nn.Module, AutoTokenizer]:
-    logger.info("🚀 Starting enhanced Pokemon NLP training...")
+# ====================== MAIN TRAINING FUNCTION ======================
+def train_pokemon_nlp_model(output_dir: str = './pokemon_nlp_model') -> Tuple[nn.Module, AutoTokenizer]:
+    """Main training function for the Pokemon NLP classifier"""
+    logger.info("Starting Pokemon NLP model training")
     
     # Create output directory
     os.makedirs(output_dir, exist_ok=True)
     
     # Generate synthetic training data
-    data_generator = EnhancedSyntheticDataGenerator()
+    data_generator = SyntheticDataGenerator()
     training_data = data_generator.generate_training_dataset(samples_per_pokemon=2500)
     
-    # Split data
+    # Split into train/validation sets
     labels_for_stratify = [item['label'] for item in training_data]
     train_data, val_data = train_test_split(
         training_data, 
@@ -501,13 +517,14 @@ def train_enhanced_model(output_dir: str = './enhanced_pokemon_nlp') -> Tuple[nn
         stratify=labels_for_stratify
     )
     
-    logger.info(f"📚 Train samples: {len(train_data)}, Validation samples: {len(val_data)}")
+    logger.info(f"Train samples: {len(train_data)}, Validation samples: {len(val_data)}")
     
-    # Use a more robust model
-    model_name = 'microsoft/deberta-v3-small'  # More efficient than BERT
+    # Initialize model and tokenizer
+    model_name = 'microsoft/deberta-v3-small'  # Efficient transformer model
     try:
         tokenizer = AutoTokenizer.from_pretrained(model_name)
         model = EnhancedPokemonClassifier(model_name=model_name, num_classes=4)
+        logger.info(f"Using model: {model_name}")
     except:
         logger.warning("DeBERTa model not available, falling back to BERT")
         model_name = 'bert-base-uncased'
@@ -518,7 +535,7 @@ def train_enhanced_model(output_dir: str = './enhanced_pokemon_nlp') -> Tuple[nn
     train_dataset = PokemonDataset(train_data, tokenizer, max_length=512)
     val_dataset = PokemonDataset(val_data, tokenizer, max_length=512)
     
-    # Training configuration
+    # Configure training arguments
     training_args = TrainingArguments(
         output_dir=output_dir,
         num_train_epochs=5,
@@ -552,18 +569,18 @@ def train_enhanced_model(output_dir: str = './enhanced_pokemon_nlp') -> Tuple[nn
         eval_dataset=val_dataset,
         tokenizer=tokenizer,
         compute_metrics=compute_metrics,
-        callbacks=[EnhancedLoggingCallback()]
+        callbacks=[TrainingCallback()]
     )
     
     # Train the model
-    logger.info("🎯 Starting training...")
+    logger.info("Starting model training")
     trainer.train()
     
-    # Evaluate and save confusion matrix
+    # Evaluate model
     eval_results = trainer.evaluate()
-    logger.info(f"📊 Final evaluation results: {eval_results}")
+    logger.info(f"Final evaluation results: {eval_results}")
     
-    # Get predictions for confusion matrix
+    # Generate confusion matrix
     predictions = trainer.predict(val_dataset)
     pred_labels = np.argmax(predictions.predictions, axis=1)
     true_labels = predictions.label_ids
@@ -574,37 +591,38 @@ def train_enhanced_model(output_dir: str = './enhanced_pokemon_nlp') -> Tuple[nn
         output_dir
     )
     
-    # Save the model
-    logger.info(f"💾 Saving model to {output_dir}")
+    # Save model and tokenizer
+    logger.info(f"Saving model to {output_dir}")
     trainer.save_model()
     tokenizer.save_pretrained(output_dir)
     
-    # Save configuration with proper JSON formatting
+    # Save configuration and metadata
     config_info = {
         'model_name': model_name,
         'pokemon_classes': list(POKEMON_KNOWLEDGE.keys()),
         'max_length': 512,
-        'version': '4.0',
-        'evaluation_results': eval_results
+        'version': 'Final',
+        'evaluation_results': eval_results,
+        'num_parameters': sum(p.numel() for p in model.parameters()),
+        'trainable_parameters': sum(p.numel() for p in model.parameters() if p.requires_grad)
     }
     
     with open(Path(output_dir) / 'model_config.json', 'w') as f:
         json.dump(config_info, f, indent=2, ensure_ascii=False)
     
-    logger.info("✅ Training completed successfully!")
+    logger.info("Training completed successfully")
+    logger.info(f"Model saved to: {output_dir}")
+    logger.info(f"Final accuracy: {eval_results.get('eval_accuracy', 0):.4f}")
     
     return model, tokenizer
 
-# ====================== ENHANCED TARGET PARSER ======================
-class EnhancedPokemonParser:
-    def __init__(self, model_path: str = './enhanced_pokemon_nlp'):
+# ====================== INFERENCE CLASS ======================
+class PokemonTargetParser:
+    """Parser for extracting Pokemon targets from prompts"""
+    
+    def __init__(self, model_path: str = './pokemon_nlp_model'):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         logger.info(f"Loading model on {self.device}")
-        
-        # Initialize miss counter
-        self.miss_counter = 0
-        self.last_prediction = None
-        self.last_confidence = 0.0
         
         # Load model configuration
         config_path = Path(model_path) / 'model_config.json'
@@ -614,11 +632,11 @@ class EnhancedPokemonParser:
         else:
             self.config = {
                 'pokemon_classes': list(POKEMON_KNOWLEDGE.keys()),
-                'max_length': 512
+                'max_length': 512,
+                'model_name': 'bert-base-uncased'
             }
         
         self.pokemon_names = self.config['pokemon_classes']
-        self.pokemon_knowledge = POKEMON_KNOWLEDGE
         
         # Load model and tokenizer
         try:
@@ -629,169 +647,60 @@ class EnhancedPokemonParser:
                 num_classes=len(self.pokemon_names)
             )
             
-            model_file = Path(model_path) / 'pytorch_model.bin'
-            if model_file.exists():
-                state_dict = torch.load(model_file, map_location=self.device)
-                self.model.load_state_dict(state_dict)
-                self.model.to(self.device)
-                self.model.eval()
-                logger.info("✅ Model loaded successfully")
+            # Try to load model weights
+            model_files = [
+                Path(model_path) / 'model.safetensors',
+                Path(model_path) / 'pytorch_model.bin'
+            ]
+            
+            for model_file in model_files:
+                if model_file.exists():
+                    if model_file.suffix == '.safetensors':
+                        try:
+                            from safetensors.torch import load_file
+                            state_dict = load_file(model_file, device=str(self.device))
+                        except ImportError:
+                            continue
+                    else:
+                        state_dict = torch.load(model_file, map_location=self.device)
+                    
+                    self.model.load_state_dict(state_dict, strict=False)
+                    self.model.to(self.device)
+                    self.model.eval()
+                    logger.info("Model loaded successfully")
+                    break
             else:
                 logger.warning("Model weights not found, using rule-based approach only")
                 self.model = None
-            
+                
         except Exception as e:
             logger.warning(f"Failed to load model: {e}. Using rule-based approach only.")
             self.model = None
             self.tokenizer = None
         
-        # Enhanced rule-based patterns
-        self.target_extraction_patterns = [
-            r"(?:eliminate|destroy|kill|terminate|neutralize|wipe out|eradicate|remove)\s+(?:all\s+|any\s+|the\s+)?([^.,;]{1,60})",
-            r"(?:priority|objective|mission|order|directive|command)[:,]?\s*(?:is\s+to\s+)?(?:eliminate|kill|destroy|neutralize|terminate)\s+(?:all\s+|the\s+)?([^.,;]{1,60})",
-            r"(?:hq\s+(?:orders?|directive)|command|headquarters)[:,]?\s*(?:eliminate|kill|destroy|neutralize)\s+(?:all\s+|the\s+)?([^.,;]{1,60})",
-            r"(?:engage|target|acquire|focus on|concentrate on)\s+(?:all\s+|any\s+|the\s+)?([^.,;]{1,60})",
-            r"(?:threat|target|priority)\s*:\s*([^.,;]{1,60})"
+        # Rule-based patterns for fallback
+        self.target_patterns = [
+            r"(?:eliminate|destroy|kill|terminate|neutralize)\s+(?:all\s+|any\s+|the\s+)?([^.,;]{1,60})",
+            r"(?:priority|objective|mission|order|directive)[:,]?\s*(?:eliminate|kill|destroy|neutralize)\s+(?:all\s+|the\s+)?([^.,;]{1,60})",
+            r"(?:target|threat)\s*:\s*([^.,;]{1,60})"
         ]
     
-    def extract_target_rule_based(self, prompt: str) -> str:
-        prompt_lower = prompt.lower()
-        candidate_scores = defaultdict(int)
-        
-        # Pattern-based extraction
-        for pattern in self.target_extraction_patterns:
-            matches = re.finditer(pattern, prompt_lower, re.IGNORECASE)
-            for match in matches:
-                text_segment = match.group(1).strip()
-                pokemon = self._match_text_to_pokemon(text_segment)
-                if pokemon:
-                    candidate_scores[pokemon] += 3
-                    # Check proximity to elimination keywords
-                    start, end = match.span()
-                    context_start = max(0, start - 50)
-                    context_end = min(len(prompt_lower), end + 50)
-                    context = prompt_lower[context_start:context_end]
-                    
-                    if any(kw in context for kw in ["eliminate", "kill", "destroy", "terminate"]):
-                        candidate_scores[pokemon] += 2
-                    if any(kw in context for kw in ["not", "avoid", "friendly", "neutral"]):
-                        candidate_scores[pokemon] -= 3
-        
-        # Context-based scoring
-        elimination_keywords = ['eliminate', 'kill', 'destroy', 'terminate', 'neutralize', 'eradicate', 'remove']
-        protection_keywords = ['not hostile', 'friendly', 'avoid', 'do not engage', 'neutral', 'non-target']
-        
-        for pokemon in self.pokemon_names:
-            all_references = self._get_all_pokemon_references(pokemon)
-            
-            for reference in all_references:
-                if reference in prompt_lower:
-                    # Count occurrences
-                    count = prompt_lower.count(reference)
-                    candidate_scores[pokemon] += count
-                    
-                    # Check context around each occurrence
-                    for match in re.finditer(re.escape(reference), prompt_lower):
-                        start = max(0, match.start() - 60)
-                        end = min(len(prompt_lower), match.end() + 60)
-                        context = prompt_lower[start:end]
-                        
-                        elimination_score = sum(2 for kw in elimination_keywords if kw in context)
-                        protection_penalty = sum(3 for kw in protection_keywords if kw in context)
-                        
-                        candidate_scores[pokemon] += elimination_score - protection_penalty
-        
-        if candidate_scores:
-            best_candidate = max(candidate_scores.items(), key=lambda x: x[1])
-            if best_candidate[1] > 0:
-                return best_candidate[0]
-        
-        # Fallback: return the most mentioned Pokemon
-        mention_counts = {}
-        for pokemon in self.pokemon_names:
-            all_refs = self._get_all_pokemon_references(pokemon)
-            mention_counts[pokemon] = sum(prompt_lower.count(ref) for ref in all_refs)
-        
-        if max(mention_counts.values()) > 0:
-            return max(mention_counts.items(), key=lambda x: x[1])[0]
-        
-        return "Pikachu"  # Default fallback
-    
-    def _match_text_to_pokemon(self, text: str) -> Optional[str]:
-        text = text.lower().strip()
-        text = re.sub(r'\b(the|any|all|some|every|each)\b', ' ', text)
-        text = re.sub(r'\s+', ' ', text).strip()
-        
-        best_match = None
-        best_score = 0
-        
-        for pokemon, knowledge in self.pokemon_knowledge.items():
-            all_refs = (knowledge.get('names', []) + 
-                       knowledge.get('descriptors', []) + 
-                       knowledge.get('physical_attributes', []))
-            
-            for ref in all_refs:
-                ref_lower = ref.lower()
-                # Exact match
-                if ref_lower == text:
-                    return pokemon
-                
-                # Partial match with scoring
-                if ref_lower in text or text in ref_lower:
-                    score = min(len(ref_lower), len(text))
-                    if score > best_score:
-                        best_score = score
-                        best_match = pokemon
-        
-        return best_match
-    
-    def _get_all_pokemon_references(self, pokemon: str) -> List[str]:
-        knowledge = self.pokemon_knowledge.get(pokemon, {})
-        references = []
-        references.extend(knowledge.get('names', []))
-        references.extend(knowledge.get('descriptors', []))
-        references.extend(knowledge.get('physical_attributes', []))
-        return [ref.lower() for ref in references if len(ref) > 3]  # Only longer references
-    
     def predict_target(self, prompt: str) -> str:
-        # Rule-based prediction
-        rule_based_target = self.extract_target_rule_based(prompt)
-        
-        # Model prediction if available
-        model_target, confidence = None, 0.0
+        """Predict target Pokemon from prompt"""
+        # Try model prediction first
         if self.model and self.tokenizer:
             try:
                 model_target, confidence = self._predict_with_model(prompt)
+                if confidence > 0.5:
+                    return model_target
             except Exception as e:
                 logger.warning(f"Model prediction failed: {e}")
         
-        # Decision logic with miss counter
-        if model_target and confidence > 0.7:
-            logger.debug(f"High confidence model prediction: {model_target} (confidence: {confidence:.3f})")
-            self.miss_counter = 0  # Reset miss counter on high confidence
-            self.last_prediction = model_target
-            self.last_confidence = confidence
-            return model_target
-        elif model_target and confidence > 0.4 and model_target == rule_based_target:
-            logger.debug(f"Model-rule agreement: {model_target} (confidence: {confidence:.3f})")
-            self.miss_counter = max(0, self.miss_counter - 1)  # Reduce miss counter
-            self.last_prediction = model_target
-            self.last_confidence = confidence
-            return model_target
-        elif self.miss_counter >= 2 and self.last_prediction:
-            # After 2 misses, stick with the last prediction
-            logger.debug(f"Sticking with last prediction after {self.miss_counter} misses: {self.last_prediction}")
-            self.miss_counter += 1
-            return self.last_prediction
-        else:
-            # Use rule-based with miss counter increment
-            logger.debug(f"Using rule-based prediction: {rule_based_target}")
-            self.miss_counter += 1
-            self.last_prediction = rule_based_target
-            self.last_confidence = 0.5  # Medium confidence for rule-based
-            return rule_based_target
+        # Fall back to rule-based approach
+        return self._extract_target_rule_based(prompt)
     
     def _predict_with_model(self, prompt: str) -> Tuple[str, float]:
+        """Predict using trained model"""
         encoding = self.tokenizer(
             prompt,
             truncation=True,
@@ -814,94 +723,104 @@ class EnhancedPokemonParser:
         
         return predicted_pokemon, confidence
     
-    def reset_miss_counter(self):
-        """Reset the miss counter (call this when a shot is successful)"""
-        self.miss_counter = 0
-
-# ====================== COORDINATE PREDICTION INTEGRATION ======================
-class CoordinatePredictor:
-    def __init__(self, cv_model_path: str = None):
-        # This would integrate with your CV model
-        # For now, we'll create a placeholder
-        self.cv_model = None
-        self.cv_loaded = False
+    def _extract_target_rule_based(self, prompt: str) -> str:
+        """Extract target using rule-based patterns"""
+        prompt_lower = prompt.lower()
+        candidate_scores = defaultdict(int)
         
-        if cv_model_path and os.path.exists(cv_model_path):
-            try:
-                # Load your CV model here
-                # self.cv_model = load_cv_model(cv_model_path)
-                self.cv_loaded = True
-                logger.info("✅ CV model loaded successfully")
-            except Exception as e:
-                logger.warning(f"Failed to load CV model: {e}")
+        # Pattern-based extraction
+        for pattern in self.target_patterns:
+            matches = re.finditer(pattern, prompt_lower, re.IGNORECASE)
+            for match in matches:
+                text_segment = match.group(1).strip()
+                pokemon = self._match_text_to_pokemon(text_segment)
+                if pokemon:
+                    candidate_scores[pokemon] += 3
+        
+        # Context-based scoring
+        elimination_keywords = ['eliminate', 'kill', 'destroy', 'terminate', 'neutralize']
+        
+        for pokemon in self.pokemon_names:
+            all_references = self._get_pokemon_references(pokemon)
+            
+            for reference in all_references:
+                if reference in prompt_lower:
+                    count = prompt_lower.count(reference)
+                    candidate_scores[pokemon] += count
+                    
+                    # Check context around references
+                    for match in re.finditer(re.escape(reference), prompt_lower):
+                        start = max(0, match.start() - 60)
+                        end = min(len(prompt_lower), match.end() + 60)
+                        context = prompt_lower[start:end]
+                        
+                        elimination_score = sum(2 for kw in elimination_keywords if kw in context)
+                        candidate_scores[pokemon] += elimination_score
+        
+        # Return best candidate or default
+        if candidate_scores:
+            best_candidate = max(candidate_scores.items(), key=lambda x: x[1])
+            if best_candidate[1] > 0:
+                return best_candidate[0]
+        
+        # Default fallback
+        return "Pikachu"
     
-    def predict_coordinates(self, image, target_pokemon: str) -> List[Dict]:
-        """
-        Predict coordinates for the target Pokemon in the image
+    def _match_text_to_pokemon(self, text: str) -> Optional[str]:
+        """Match text segment to Pokemon"""
+        text = text.lower().strip()
+        text = re.sub(r'\b(the|any|all|some|every|each)\b', ' ', text)
+        text = re.sub(r'\s+', ' ', text).strip()
         
-        Returns:
-            List of dictionaries with 'center_x', 'center_y', 'confidence' keys
-        """
-        # This would use your CV model to detect all Pokemon
-        # and return centers for the target Pokemon
+        for pokemon, knowledge in POKEMON_KNOWLEDGE.items():
+            all_refs = (knowledge.get('names', []) + 
+                       knowledge.get('descriptors', []) + 
+                       knowledge.get('physical_attributes', []))
+            
+            for ref in all_refs:
+                if ref.lower() == text or ref.lower() in text:
+                    return pokemon
         
-        # Placeholder implementation
-        centers = []
-        
-        if self.cv_loaded:
-            # Use your actual CV model here
-            # detections = self.cv_model.predict(image)
-            # for detection in detections:
-            #     if detection['class'] == target_pokemon and detection['confidence'] > 0.5:
-            #         centers.append({
-            #             'center_x': detection['x_center'],
-            #             'center_y': detection['y_center'],
-            #             'confidence': detection['confidence']
-            #         })
-            pass
-        else:
-            # Fallback: return some random coordinates for testing
-            for _ in range(random.randint(1, 3)):
-                centers.append({
-                    'center_x': random.randint(50, 590),
-                    'center_y': random.randint(50, 430),
-                    'confidence': random.uniform(0.6, 0.9)
-                })
-        
-        return centers
+        return None
+    
+    def _get_pokemon_references(self, pokemon: str) -> List[str]:
+        """Get all text references for a Pokemon"""
+        knowledge = POKEMON_KNOWLEDGE.get(pokemon, {})
+        references = []
+        references.extend(knowledge.get('names', []))
+        references.extend(knowledge.get('descriptors', []))
+        references.extend(knowledge.get('physical_attributes', []))
+        return [ref.lower() for ref in references if len(ref) > 3]
 
 # ====================== MAIN EXECUTION ======================
 def main():
-    logger.info("🎯 Starting Enhanced Pokemon NLP System")
+    """Main function to train and test the NLP model"""
+    logger.info("Starting Pokemon NLP Training Pipeline")
     
     try:
         # Train the model
-        model, tokenizer = train_enhanced_model()
+        model, tokenizer = train_pokemon_nlp_model()
         
-        # Test the parser
-        logger.info("Testing enhanced parser...")
-        parser = EnhancedPokemonParser()
+        # Test the parser with sample prompts
+        logger.info("Testing trained model")
+        parser = PokemonTargetParser()
         
-        # Example tests
         test_prompts = [
             """
             HQ REPORT Situation analysis regarding unusual activity of flame dragon in this operational zone.
             Additional activity from plant reptile groups nearby, though they do not appear hostile at present.
             Radio checkpoint at 0200 to confirm continued presence.
             Priority: eliminate the scaled fire titan at first contact, then hold position for assessment.
-            Maintain operational secrecy. Local sensors report intermittent EM spikes.
             """,
             """
             FIELD BULLETIN: Intel suggests increased pikachu activity in sector 7B.
             Thermal scans show multiple electric-type signatures. 
             Command directive: neutralize all electric mouse specimens on sight.
-            Exercise caution - these specimens can discharge high voltage.
             """,
             """
             MISSION BRIEFING: Our scouts have detected mewtwo in the northern sector.
             This psychic clone is extremely powerful and should not be engaged directly.
             However, HQ has issued orders to eliminate the genetic experiment immediately.
-            Use extreme caution and coordinate with backup teams.
             """
         ]
         
@@ -909,12 +828,11 @@ def main():
             result = parser.predict_target(prompt)
             logger.info(f"Test {i+1} result: {result}")
         
-        logger.info("✅ Enhanced NLP Module Ready for Production!")
-        
+        logger.info("NLP Training Pipeline completed successfully")
         return parser
         
     except Exception as e:
-        logger.error(f"Training/testing failed: {e}")
+        logger.error(f"Training pipeline failed: {e}")
         raise
 
 if __name__ == "__main__":
