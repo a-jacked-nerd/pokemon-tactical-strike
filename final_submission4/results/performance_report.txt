@@ -1,0 +1,30 @@
+
+POKEMON HACKATHON PERFORMANCE REPORT
+====================================
+
+Dataset Statistics:
+- Total Images Processed: 200
+- Successful Predictions: 199 (99.50%)
+- Total Shots Fired: 573
+- Average Shots per Image: 2.87
+- Average Processing Time: 1.715s per image
+
+Pokemon Distribution:
+- Pikachu: 50 images (25.0%)
+- Charizard: 54 images (27.0%)
+- Bulbasaur: 56 images (28.0%)
+- Mewtwo: 40 images (20.0%)
+
+Average Detection Confidence: 0.653
+
+Model Performance:
+- NLP Model: Loaded Successfully
+- CV Model: Loaded Successfully
+- Confidence Strategy: adaptive
+- Confidence Threshold: 0.25
+
+Heuristics Applied:
+- Miss Counter Strategy: Active (reduces -1 penalties)
+- Adaptive Confidence: Enabled
+- Non-Maximum Suppression: Enabled (IoU = 0.5)
+- Maximum Shots per Image: 10
