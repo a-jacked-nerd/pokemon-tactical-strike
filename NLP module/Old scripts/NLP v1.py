@@ -11,7 +11,6 @@ Key Features:
 - LLM-generated synthetic prompts based on test data analysis
 - Hybrid approach: Deep learning + rule-based fallback
 - Handles complex military-style prompts up to 1000 words
-- 95%+ accuracy expected on single target identification
 
 Author: Enhanced NLP System for Pokemon Hackathon
 Version: 1.0 - Single Target Optimized
