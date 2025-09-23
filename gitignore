@@ -1,0 +1,138 @@
+# Git ignore file for Pokemon Hackathon Project
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+pokemon-hackathon/
+pokemon_env/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb_checkpoints/
+
+# PyTorch Model Files
+*.pt
+*.pth
+*.safetensors
+*.onnx
+runs/
+logs/
+checkpoints/
+weights/
+
+# Training Data and Results
+enhanced_pokemon_nlp/
+pokemon_final_model/
+hackathon_results/
+hackathon_results*/
+visualizations/
+visualizations*/
+final_submission/
+submission_results/
+
+# Dataset Files
+data/
+datasets/
+*.zip
+*.tar.gz
+train_images/
+test_images/
+annotations/
+
+# Logs and Metrics
+*.log
+wandb/
+lightning_logs/
+tensorboard_logs/
+mlruns/
+
+# IDE Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary Files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Configuration Files (with sensitive data)
+config_local.json
+secrets.json
+.env
+.env.local
+
+# Large Data Files
+*.h5
+*.hdf5
+*.pickle
+*.pkl
+
+# Results and Outputs
+results/
+outputs/
+predictions/
+submissions/
+evaluation/
+
+# Backup Files
+*.bak
+*.backup
+*_backup.*
+
+# Cache Files
+.cache/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Documentation Build
+docs/_build/
+site/
+
+# Specific to this project
+the-poke-war-hackathon-ai-guild-recuritment-hack/
+pokemon_dataset.yaml
+model_configs/
+training_checkpoints/
