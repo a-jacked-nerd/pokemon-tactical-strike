@@ -1,0 +1,48 @@
+# YOLOv8 Training Configuration for Pokemon Detection
+
+# Model settings
+model: yolov8n  # yolov8n, yolov8s, yolov8m, yolov8l, yolov8x
+
+# Data settings
+data: pokemon_dataset.yaml  # Path to dataset YAML
+batch_size: 16
+imgsz: 640
+epochs: 100
+
+# Optimization
+optimizer: AdamW
+lr0: 0.001
+lrf: 0.01
+momentum: 0.937
+weight_decay: 0.0005
+
+# Augmentation
+hsv_h: 0.015
+hsv_s: 0.7
+hsv_v: 0.4
+degrees: 0.0
+translate: 0.1
+scale: 0.5
+shear: 0.0
+perspective: 0.0
+flipud: 0.0
+fliplr: 0.5
+mosaic: 1.0
+mixup: 0.0
+
+# Training settings
+patience: 50
+save_period: 10
+val: true
+plots: true
+device: 0  # GPU device, '' for CPU
+
+# Classes (Pokemon)
+names:
+  0: Pikachu
+  1: Charizard
+  2: Bulbasaur
+  3: Mewtwo
+
+# Hyperparameter evolution
+evolve: 300

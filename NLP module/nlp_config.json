@@ -1,0 +1,27 @@
+{
+  "model_name": "bert-base-uncased",
+  "max_length": 512,
+  "batch_size": 16,
+  "learning_rate": 2e-5,
+  "epochs": 10,
+  "warmup_steps": 500,
+  "weight_decay": 0.01,
+  "dropout": 0.3,
+  "num_classes": 4,
+  "pokemon_classes": {
+    "0": "Pikachu",
+    "1": "Charizard", 
+    "2": "Bulbasaur",
+    "3": "Mewtwo"
+  },
+  "class_weights": [1.0, 1.0, 1.0, 1.0],
+  "seed": 42,
+  "device": "auto",
+  "gradient_accumulation_steps": 1,
+  "save_strategy": "epoch",
+  "evaluation_strategy": "epoch",
+  "logging_steps": 100,
+  "metric_for_best_model": "accuracy",
+  "load_best_model_at_end": true,
+  "early_stopping_patience": 3
+}
