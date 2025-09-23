@@ -82,7 +82,7 @@ pokemon-tactical-strike/
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/pokemon-tactical-strike.git
+git clone https://github.com/a-jacked-nerd/pokemon-tactical-strike.git
 cd pokemon-tactical-strike
 
 # Create conda environment
@@ -246,7 +246,7 @@ logging.basicConfig(level=logging.DEBUG)
 ### Development Setup
 ```bash
 # Fork and clone your fork
-git clone https://github.com/yourusername/pokemon-tactical-strike.git
+git clone https://github.com/a-jacked-nerd/pokemon-tactical-strike.git
 cd pokemon-tactical-strike
 
 # Create feature branch
@@ -308,22 +308,13 @@ safetensors>=0.3.0
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - **AI Guild** for organizing the hackathon
 - **Ultralytics** for the excellent YOLOv8 framework
 - **Hugging Face** for transformer models and tools
 - **Pokemon Company** for the inspiration
 - **Competition organizers** for the challenging problem statement
-
-## 📞 Support
-
-For issues, questions, or contributions:
-
-- **GitHub Issues**: Report bugs and feature requests
-- **Discussions**: Ask questions and share ideas  
-- **Email**: [your-email@domain.com]
-- **Discord**: Join our development server
 
 ---
 
