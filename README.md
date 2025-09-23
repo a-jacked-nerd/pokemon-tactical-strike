@@ -45,7 +45,7 @@ pokemon-tactical-strike/
 ├── environment.yml                    # Conda environment setup
 ├── .gitignore                        # Git ignore patterns
 │
-├── CV/                               # Computer Vision Module
+├── CV module/                        # Computer Vision Module
 │   ├── cv.py                         # Main CV detection class
 │   ├── config.yaml                   # CV configuration
 │   └── old_scripts/                  # Previous CV versions
@@ -53,7 +53,7 @@ pokemon-tactical-strike/
 │       ├── cv_v2.py
 │       └── cv_v3.py
 │
-├── NLP/                              # Natural Language Processing Module
+├── NLP module/                       # Natural Language Processing Module
 │   ├── nlp.py                        # Main NLP classifier class
 │   ├── train_nlp.py                  # BERT training script
 │   ├── config.json                   # NLP configuration
