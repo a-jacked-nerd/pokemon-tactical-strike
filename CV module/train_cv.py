@@ -609,7 +609,7 @@ class FinalTrainingPipeline:
         # Train with optimized parameters
         results = model.train(
             data=str(yolo_yaml),
-            epochs=300,  # More epochs for better convergence
+            epochs=100,     #In hackathon I stopped it around ~67 epochs cuz my model wasnt improving that much anwyays and I thought it will lead to overfitting
             imgsz=640,
             batch=8 if model_size == 'x' else 16,
             optimizer="AdamW",
